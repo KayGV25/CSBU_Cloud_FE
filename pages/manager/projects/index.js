@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import moment from 'moment';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
-import { API_URL } from '../../../env';
+import { API_URL, PROJECT_API_URL } from '../../../env';
 
 export default function DepartmentProject() {
     const { user } = useUserContext();
@@ -25,7 +25,7 @@ export default function DepartmentProject() {
         const token = localStorage.getItem("token");
         const dataToPass = { departmentId: user?.department }
         try {
-            const response = await fetch(`${API_URL}/api/v1/projects/department`, {
+            const response = await fetch(`${PROJECT_API_URL}/department`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -73,7 +73,7 @@ export default function DepartmentProject() {
 
     const handleFormSubmit = async (values) => {
         const token = localStorage.getItem("token");
-        const url = `${API_URL}/api/v1/projects`
+        const url = `${PROJECT_API_URL}`
 
         const method = isEditMode ? "PUT" : "POST";
         // console.log(dayjs(values.endDate).format("YYYY-MM-DD"));

@@ -1,5 +1,5 @@
 export default async function id_currencyHandler(req, res) {
-    const backendUrl = 'http://localhost:8080/api/v1/finance';
+    const backendUrl = 'http://localhost:8050/api/v1/finance';
     const { method, body, query } = req;
 
     let url = `${backendUrl}/budgets/id-currency`;

@@ -41,7 +41,7 @@ export default function Transaction() {
 
 
   const { data, error, isLoading } = useSWR(
-    `${API_URL}/api/v1/finance/transactions?page=${currentPage}&${searchParams}`,
+    `${FINANCE_API_URL}/transactions?page=${currentPage}&${searchParams}`,
     getFetcher,
     {
       refreshInterval: 0,
@@ -103,7 +103,7 @@ const CreateModal = ({ isCreateModalOpen, handleOk, handleCancel, currentPage, s
     </Button>,
   ]
 
-  const { data, error, isLoading } = useSWR(`${API_URL}/api/v1/finance/budgets/id-currency`, getFetcher);
+  const { data, error, isLoading } = useSWR(`${FINANCE_API_URL}/budgets/id-currency`, getFetcher);
   useEffect(() => {
     if (isCreateModalOpen) {
       setBudgetOptions(data); 
@@ -114,7 +114,7 @@ const CreateModal = ({ isCreateModalOpen, handleOk, handleCancel, currentPage, s
     try {
       const values = await form.validateFields();
       
-      const newData = await postFetcher(`${API_URL}/api/v1/finance/transactions`, {
+      const newData = await postFetcher(`${FINANCE_API_URL}/transactions`, {
         id: values.transactionId,
         transactionType: values.transactionType,
         budgetId: values.Budget,
@@ -122,7 +122,7 @@ const CreateModal = ({ isCreateModalOpen, handleOk, handleCancel, currentPage, s
         amount: values.transactionAmount,
         description: values.Description
       });
-      mutate(`${API_URL}/api/v1/finance/transactions?page=${currentPage}&${searchParams}`)
+      mutate(`${FINANCE_API_URL}/transactions?page=${currentPage}&${searchParams}`)
 
       
       handleOk(values); 
@@ -199,7 +199,7 @@ const SearchBar = ({showModal, onSearch, setSearchParams, setCurrentPage}) => {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [uniqueCurrency, setUniqueCurrency] = useState('');
 
-  const { data, error, isLoading } = useSWR(`${API_URL}/api/v1/finance/budgets/id-currency`, getFetcher);
+  const { data, error, isLoading } = useSWR(`${FINANCE_API_URL}/budgets/id-currency`, getFetcher);
   useEffect(() => {
     if (data) {
       const currencies = data.map(item => item.currency);
@@ -454,7 +454,7 @@ const FileModal = ({ isFileModalOpen, handleOk, handleCancel , id, currentPage,s
                 message.success('File uploaded successfully');
                 handleOk();
                 form.resetFields(); 
-                mutate(`${API_URL}/api/v1/finance/transactions?page=${currentPage}&${searchParams}`)
+                mutate(`${FINANCE_API_URL}/transactions?page=${currentPage}&${searchParams}`)
               } else {
                 message.error('Failed to upload file');
               }

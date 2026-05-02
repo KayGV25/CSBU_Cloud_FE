@@ -7,7 +7,7 @@ import { useUserContext } from "../../../context/UserContext";
 import {Button, Modal, Form, Input, DatePicker, Select, InputNumber, Pagination} from 'antd'
 import { getFetcher ,postFetcher} from "../../../fetcher";
 import useSWR, {mutate} from "swr";
-import { API_URL } from "../../../env";
+import { FINANCE_API_URL } from "../../../env";
 
 export default function Budget() {
   const router = useRouter();
@@ -41,7 +41,7 @@ export default function Budget() {
   };
   
   const { data, error, isLoading } = useSWR(
-    `${API_URL}/api/v1/finance/budgets?page=${currentPage}&${searchParams}`,
+    `${FINANCE_API_URL}/budgets?page=${currentPage}&${searchParams}`,
     getFetcher,
     {
       refreshInterval: 0,
@@ -103,7 +103,7 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel, searchParams, curren
   const handleCreate = async () => {
     try {
       const values = await form.validateFields();
-      await postFetcher(`${API_URL}/api/v1/finance/budgets`, {
+      await postFetcher(`${FINANCE_API_URL}/budgets`, {
         id: values.budgetId,
         budgetAmount: values.initialBudget,
         currency: values.Currency,
@@ -112,7 +112,7 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel, searchParams, curren
         description: values.Description,
       });
 
-      mutate(`${API_URL}/api/v1/finance/budgets?page=${currentPage}&${searchParams}`);
+      mutate(`${FINANCE_API_URL}/budgets?page=${currentPage}&${searchParams}`);
 
       form.resetFields();
       setErr('');

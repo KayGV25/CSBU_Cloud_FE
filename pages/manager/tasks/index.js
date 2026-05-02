@@ -6,7 +6,7 @@ import { Button, Modal, Form, Input, DatePicker, Select } from 'antd'
 import "../../../styles/Home.module.css"
 import { toast } from "sonner";
 import dayjs from "dayjs";
-import { API_URL } from "../../../env";
+import { API_URL, TASK_API_URL } from "../../../env";
 
 
 export default function EmployeeTasksManagement() {
@@ -34,7 +34,7 @@ export default function EmployeeTasksManagement() {
         status: false
       }
 
-      const response = await fetch(`${API_URL}/api/v1/tasks`, {
+      const response = await fetch(`${TASK_API_URL}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -57,7 +57,7 @@ export default function EmployeeTasksManagement() {
   const deleteTask = async (taskId) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/api/v1/tasks/${taskId}`, {
+      const response = await fetch(`${TASK_API_URL}/${taskId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -75,7 +75,7 @@ export default function EmployeeTasksManagement() {
   const updateTask = async (taskId) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/api/v1/tasks/${taskId}/status`, {
+      const response = await fetch(`${TASK_API_URL}/${taskId}/status`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -98,7 +98,7 @@ export default function EmployeeTasksManagement() {
     const token = localStorage.getItem("token");
     // const dataToPass = { departmentId: user?.department }
     try {
-      const response = await fetch(`${API_URL}/api/v1/tasks/department/${user?.department}`, {
+      const response = await fetch(`${TASK_API_URL}/department/${user?.department}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
