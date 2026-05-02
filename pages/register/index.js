@@ -31,7 +31,7 @@ const Register = () => {
     // Handle form submission logic here
     try {
       setIsSigningUp(true);
-      const data = await axios.post(`${API_URL}/api/v1/users/register`, formData)
+      const data = await axios.post(`${API_URL}/api/v1/users`, formData)
       toast.success("Create Account Successfully!!!");
       // console.log(data);
       router.push("/login");
