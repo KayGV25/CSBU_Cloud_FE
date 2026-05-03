@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
     const { id } = req.query;
-    const backendUrl = `http://13.220.97.118:8050/api/v1/finance/transactions/${id}`;
+    const backendUrl = `/api/v1/finance/transactions/${id}`;
     console.log(backendUrl);
 
     if (req.method === 'DELETE') {

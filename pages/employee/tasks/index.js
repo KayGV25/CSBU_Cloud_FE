@@ -6,7 +6,7 @@ import { Eye, CircleX, CheckCircle } from "lucide-react";
 import "../../../styles/Home.module.css"
 import { toast } from "sonner";
 // import dayjs from "dayjs";
-import { API_URL, TASK_API_URL } from "../../../env";
+import { TASK_API_URL } from "../../../env";
 
 
 export default function EmployeeTasksManagement() {
