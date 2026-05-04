@@ -162,6 +162,7 @@ const Table = ({ userData }) => {
           yoe: userUpdate.yoe,
           approved: userUpdate.approved ?? true,
           role: userUpdate.role,
+          password: userUpdate.password || undefined,
         }),
       });
 
@@ -191,6 +192,7 @@ const Table = ({ userData }) => {
             <th className="border px-4 py-2">Employee Name</th>
             <th className="border px-4 py-2">Department</th>
             <th className="border px-4 py-2">Role</th>
+            <th className="border px-4 py-2">Password</th>
             <th className="border px-4 py-2">Action</th>
           </tr>
         </thead>
@@ -291,6 +293,18 @@ const UserForm = ({ userData, onSave }) => {
           </Select>
         ) : (
           userData.department_name || userData.department_id || userData.department
+        )}
+      </td>
+
+      <td className="border px-4 py-2">
+        {edit ? (
+          <Input.Password
+            value={editUser.password || ""}
+            onChange={(e) => handleInputChange("password", e.target.value)}
+            placeholder="Leave empty to keep current"
+          />
+        ) : (
+          "******"
         )}
       </td>
 

@@ -1,8 +1,5 @@
 import { useState } from "react";
-import Layout from "../../components/Layout"
-
 import Head from "next/head";
-import { useUserContext } from "../../context/UserContext";
 import { toast } from "sonner";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -11,52 +8,37 @@ import { API_URL } from "../../env";
 export default function Login() {
     const [employeeCode, setEmployeeCode] = useState('');
     const [password, setPassword] = useState('');
-    const { user, setUser } = useUserContext();
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
     const router = useRouter();
 
     const handleSubmit = async(e) => {
         e.preventDefault();
         try {
+            setIsLoggingIn(true);
             const response = await fetch(`${API_URL}/api/v1/auth/login`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                id: employeeCode,
+                user_id: employeeCode,
                 password: password,
               }),
             });
       
             const data = await response.json();
-            // console.log(data.accessToken)
-            if (response.ok) {
-              const token = data.accessToken;
-              localStorage.setItem('token', token); 
+            if (response.ok && (data.authenticated || data.accessToken)) {
+              if (data.accessToken) {
+                localStorage.setItem('token', data.accessToken);
+              }
               router.push("/");
+            } else {
+              toast.error(data.message || "Authentication failed");
             }
-      
-            //   const userResponse = await fetch(`${API_URL}/api/v1/users/${employeeCode}`, {
-            //     method: 'GET',
-            //     headers: {
-            //       'Authorization': `Bearer ${token}`,
-            //     },
-            //   });
-      
-            //   if (userResponse.ok) {
-            //     const userData = await userResponse.json();
-            //     setUser(userData);
-            //     console.log(userData);
-            //     console.log(user);
-            //     // router.push("/");
-            //   } else {
-            //     toast.error("Failed to fetch User");
-            //   }
-            // } else {
-            //   toast.error(data.message || 'Authentication failed');
-            // }
           } catch (err) {
             toast.error(`Something went wrong: ${err}`);
+          } finally {
+            setIsLoggingIn(false);
           }
       };
     return (
@@ -107,9 +89,10 @@ export default function Login() {
                     </div>
                     <button
                         type="submit"
+                        disabled={isLoggingIn}
                         className="w-full px-4 py-2 font-bold text-white bg-indigo-500 rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     >
-                        Login
+                        {isLoggingIn ? "Logging in..." : "Login"}
                     </button>
                     </form>
                     <p className="mt-4 text-sm text-center text-gray-600">

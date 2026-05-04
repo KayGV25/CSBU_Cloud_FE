@@ -13,6 +13,7 @@ const Register = () => {
     department_id: "",
     yoe: 0,
     role: "EMPLOYEE",
+    password: "",
   });
   const [departments, setDepartments] = useState([]);
   const [isSigningUp, setIsSigningUp] = useState(false);
@@ -52,6 +53,7 @@ const Register = () => {
           yoe: Number(formData.yoe),
           approved: false,
           role: formData.role,
+          password: formData.password,
         }),
       });
       if (!response.ok) throw new Error("Registration failed");
@@ -162,7 +164,7 @@ const Register = () => {
           </div>
 
           {/* Role */}
-          <div className="mb-6">
+          <div className="mb-4">
             <label htmlFor="role" className="block mb-2 text-sm font-medium text-gray-600">
               Role
             </label>
@@ -177,6 +179,22 @@ const Register = () => {
               <option value="MANAGER">Manager</option>
               <option value="ADMIN">Admin</option>
             </select>
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-600">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Create a password"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring focus:ring-indigo-100 focus:border-indigo-300"
+              required
+            />
           </div>
 
           {/* Submit */}
