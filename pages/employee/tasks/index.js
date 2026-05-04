@@ -93,7 +93,7 @@ export default function EmployeeTasksManagement() {
     return matchesName && matchesId;
   });
 
-  if (user && user.role !== "USER") {
+  if (user && user.role !== "EMPLOYEE") {
     return (
       <Layout>
         <div className="flex justify-center items-center text-3xl">You are not allowed to access this page</div>

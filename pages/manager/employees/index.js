@@ -14,21 +14,20 @@ export default function ManagerScreen() {
 
   const fetchEmployees = async () => {
     const token = localStorage.getItem("token");
-    const dataToPass = { department: user?.department }
     try {
-      const response = await fetch(`${API_URL}/api/v1/users/department`, {
-        method: "POST",
+      const response = await fetch(`${API_URL}/api/v1/users`, {
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(dataToPass)
       });
 
       if (!response.ok) throw new Error("Failed to fetch employees");
 
       const employeeData = await response.json();
-      setEmployees(employeeData);
+      setEmployees(
+        employeeData.filter((employee) => (employee.department_id || employee.department) === user?.department)
+      );
     } catch (error) {
       console.error("Error occured:", error);
       toast.error("Something went wrong!!!");
@@ -40,7 +39,7 @@ export default function ManagerScreen() {
   }, [user?.department]);
 
   const filteredEmployee = employees?.filter((user) => {
-    const matchesName = user.fullname
+    const matchesName = (user.full_name || user.fullname || "")
       .toLowerCase()
       .includes(searchName.toLowerCase());
     const matchesId = user.id
@@ -113,8 +112,8 @@ const Table = ({employees}) => {
           {employees?.map((employee) => (
             <tr key={employee.id} className="hover:bg-gray-100">
               <td className="border px-4 py-2">{employee.id}</td>
-              <td className="border px-4 py-2">{employee.fullname}</td>
-              <td className="border px-4 py-2">{employee.department}</td>
+              <td className="border px-4 py-2">{employee.full_name || employee.fullname}</td>
+              <td className="border px-4 py-2">{employee.department_name || employee.department_id || employee.department}</td>
               <td className="border px-4 py-2">{employee.role}</td>
             </tr>
           ))}

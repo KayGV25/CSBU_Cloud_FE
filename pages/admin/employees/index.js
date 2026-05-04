@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Layout from "../../../components/Layout";
 import { useUserContext } from "../../../context/UserContext";
-import { Button, Form, Input, InputNumber, Modal, Select } from "antd";
+import { Button, Input, Select } from "antd";
 // import axios from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/router";
@@ -40,7 +40,7 @@ export default function AdminScreen() {
   const fetchDepartments = async () => {
     const token = localStorage.getItem("token");
     try {
-      const response = await fetch(`${API_URL}/api/v1/departments`, {
+      const response = await fetch(`${API_URL}/api/v1/department`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -63,7 +63,7 @@ export default function AdminScreen() {
   }, []);
 
   const filteredEmployee = userData?.filter((user) => {
-    const matchesName = user.fullname
+    const matchesName = (user.full_name || user.fullname || "")
       .toLowerCase()
       .includes(searchName.toLowerCase());
     const matchesId = user.id
@@ -72,7 +72,7 @@ export default function AdminScreen() {
     const matchesRole = user.role
       .toLowerCase()
       .includes(searchRole.toLowerCase());
-    const matchDepartment = user.department
+    const matchDepartment = (user.department_id || user.department || "")
       .toLowerCase()
       .includes(searchDepartment.toLowerCase());
     return matchesName && matchesId && matchesRole && matchDepartment;
@@ -122,7 +122,7 @@ const SearchBar = ({ searchName, setSearchName, searchID, setSearchID, searchRol
       <option value="">All roles</option>
       <option value="ADMIN">Admin</option>
       <option value="MANAGER">Manager</option>
-      <option value="USER">User</option>
+      <option value="EMPLOYEE">Employee</option>
     </select>
     <select
       className="border rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-green-500"
@@ -131,7 +131,9 @@ const SearchBar = ({ searchName, setSearchName, searchID, setSearchID, searchRol
     >
       <option value="">All departments</option>
       {departments?.map(department => (
-        <option key={department.departmentId} value={department.departmentId}>{department.departmentName}</option>
+        <option key={department.id || department.departmentId} value={department.id || department.departmentId}>
+          {department.department_name || department.departmentName}
+        </option>
       ))}
       {/* <option value="ADMIN">Admin</option>
       <option value="MANAGER">Manager</option>
@@ -146,13 +148,21 @@ const Table = ({ userData }) => {
   const updateUser = async (userUpdate) => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`${API_URL}/api/v1/users/update`, {
+      const response = await fetch(`${API_URL}/api/v1/users/${userUpdate.id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(userUpdate),
+        body: JSON.stringify({
+          id: userUpdate.id,
+          full_name: userUpdate.full_name || userUpdate.fullname,
+          dob: userUpdate.dob,
+          department_id: userUpdate.department_id || userUpdate.department,
+          yoe: userUpdate.yoe,
+          approved: userUpdate.approved ?? true,
+          role: userUpdate.role,
+        }),
       });
 
       const data = await response.json();
@@ -216,7 +226,7 @@ const UserForm = ({ userData, onSave }) => {
   const fetchDepartments = async () => {
     const token = localStorage.getItem("token");
     try {
-      const response = await fetch(`${API_URL}/api/v1/departments`, {
+      const response = await fetch(`${API_URL}/api/v1/department`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -256,11 +266,11 @@ const UserForm = ({ userData, onSave }) => {
       <td className="border px-4 py-2">
         {edit ? (
           <Input
-            value={editUser.fullname}
-            onChange={(e) => handleInputChange("fullname", e.target.value)}
+            value={editUser.full_name || editUser.fullname}
+            onChange={(e) => handleInputChange("full_name", e.target.value)}
           />
         ) : (
-          userData.fullname
+          userData.full_name || userData.fullname
         )}
       </td>
 
@@ -268,17 +278,19 @@ const UserForm = ({ userData, onSave }) => {
       <td className="border px-4 py-2">
         {edit ? (
           <Select
-            value={editUser.department}
-            onChange={(value) => handleInputChange("department", value)}
+            value={editUser.department_id || editUser.department}
+            onChange={(value) => handleInputChange("department_id", value)}
             style={{ width: "100%" }}
           >
             {/* Add the options for departments */}
             {departments && departments.map((department, index) =>
-              <Select.Option key={index} value={department.departmentId}>{department.departmentName}</Select.Option>
+              <Select.Option key={index} value={department.id || department.departmentId}>
+                {department.department_name || department.departmentName}
+              </Select.Option>
             )}
           </Select>
         ) : (
-          userData.department
+          userData.department_name || userData.department_id || userData.department
         )}
       </td>
 
@@ -291,7 +303,7 @@ const UserForm = ({ userData, onSave }) => {
             style={{ width: "100%" }}
           >
             {/* Add the options for departments */}
-            <Select.Option value="USER">User</Select.Option>
+            <Select.Option value="EMPLOYEE">Employee</Select.Option>
             <Select.Option value="MANAGER">Manager</Select.Option>
             <Select.Option value="ADMIN">Admin</Select.Option>
             {/* Add more options as needed */}

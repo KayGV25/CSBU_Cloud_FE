@@ -1,8 +1,7 @@
-import { House, Search, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import Layout from '../../../components/Layout';
 import Head from "next/head";
-import { Button, Modal, Form, Input, InputNumber, DatePicker, Select } from 'antd'
+import { Button, Modal, Form, Input, Select } from 'antd'
 import { useUserContext } from '../../../context/UserContext';
 import { toast } from 'sonner';
 import { useRouter } from 'next/router';
@@ -20,7 +19,7 @@ export default function Departments() {
     const fetchDepartments = async () => {
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`${API_URL}/api/v1/departments`, {
+            const response = await fetch(`${API_URL}/api/v1/department`, {
                 method: "GET",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -39,22 +38,18 @@ export default function Departments() {
 
     const fetchManagers = async () => {
         const token = localStorage.getItem("token");
-        const dataToPass = { role: "MANAGER" }
         try {
-            const response = await fetch(`${API_URL}/api/v1/users/role`, {
-                method: "POST",
+            const response = await fetch(`${API_URL}/api/v1/users`, {
+                method: "GET",
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-
                 },
-                body: JSON.stringify(dataToPass)
             });
 
             if (!response.ok) throw new Error("Failed to fetch managers");
 
-            const managerData = await response.json();
-            setManagers(managerData);
+            const allUsers = await response.json();
+            setManagers(allUsers);
         } catch (error) {
             console.error("Error occured:", error);
             toast.error("Something went wrong!!!");
@@ -64,7 +59,7 @@ export default function Departments() {
     const deleteDepartment = async (departmentId) => {
         try {
             const token = localStorage.getItem("token");
-            const response = await fetch(`${API_URL}/api/v1/departments/${departmentId}`, {
+            const response = await fetch(`${API_URL}/api/v1/department/${departmentId}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -106,10 +101,12 @@ export default function Departments() {
     }
 
     const filteredDepartments = departments?.filter((department) => {
-        const matchesName = department.departmentName
+        const departmentName = department.department_name || department.departmentName || "";
+        const departmentId = department.id || department.departmentId || "";
+        const matchesName = departmentName
             .toLowerCase()
             .includes(searchName.toLowerCase());
-        const matchesId = department.departmentId
+        const matchesId = departmentId
             .toLowerCase()
             .includes(searchID.toLowerCase());
         return matchesName && matchesId;
@@ -138,6 +135,7 @@ export default function Departments() {
                         isModalOpen={isModalOpen}
                         handleOk={handleOk}
                         handleCancel={handleCancel}
+                        managers={managers}
                     />
                     <Table showModal={showModal} departments={filteredDepartments} managers={managers} deleteDepartment={deleteDepartment}/>
                 </div>
@@ -182,39 +180,7 @@ const SearchBar = ({ searchID, setSearchID, searchName, setSearchName }) => {
     );
 }
 
-const Table = ({ showModal, departments, managers, deleteDepartment }) => {
-    const router = useRouter();
-
-    const updateDepartment = async (departmentUpdate) => {
-        try {
-            const token = localStorage.getItem("token");
-            console.log(departmentUpdate);
-            const response = await fetch(`${API_URL}/api/v1/departments/update`, {
-                method: "PUT",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(departmentUpdate),
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                // Successfully saved the department
-                console.log("Department updated successfully", data);
-                toast.success("Department updated successfully");
-            } else {
-                // Handle any errors from the server
-                console.error("Error updating department:", data);
-                // You can show a toast or notification for error
-            }
-        } catch (error) {
-            console.error("Error during department update:", error);
-        } finally {
-            router.reload();
-        }
-    }
-
+const Table = ({ showModal, departments, deleteDepartment }) => {
     return (
         <div className="overflow-x-auto">
             <Button
@@ -234,15 +200,20 @@ const Table = ({ showModal, departments, managers, deleteDepartment }) => {
                 </thead>
                 <tbody>
                     {departments && departments.map((department, index) => {
-                        const dep_managers = managers?.filter((manager) => manager.department === department.departmentId)
-                            .map((manager) => manager.fullname)
+                        const departmentId = department.id || department.departmentId;
                         return (
-                            // <tr key={index} className="hover:bg-gray-100">
-                            //     <td className="border px-4 py-2">{department.departmentId}</td>
-                            //     <td className="border px-4 py-2">{department.departmentName}</td>
-                            //     <td className="border px-4 py-2">{dep_managers?.join(", ")}</td>
-                            // </tr>
-                            <DepartmentForm key={index} departmentData={department} onSave={updateDepartment} depManagers={dep_managers} deleteDepartment={deleteDepartment} />
+                            <tr key={index} className="hover:bg-gray-100">
+                                <td className="border px-4 py-2">{departmentId}</td>
+                                <td className="border px-4 py-2">{department.department_name || department.departmentName}</td>
+                                <td className="border px-4 py-2">{department.head_name || "-"}</td>
+                                <td className="border px-4 py-2">
+                                    <div className="flex gap-2">
+                                        <div className="flex rounded-full">
+                                            <button><CircleX className="text-[#de0d0d] w-8 h-8" onClick={() => deleteDepartment(departmentId)} /></button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
                         )
                     })}
                 </tbody>
@@ -251,7 +222,7 @@ const Table = ({ showModal, departments, managers, deleteDepartment }) => {
     );
 }
 
-const CreateModal = ({ isModalOpen, handleOk, handleCancel }) => {
+const CreateModal = ({ isModalOpen, handleOk, handleCancel, managers }) => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -262,7 +233,7 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel }) => {
         try {
             // Send the department data to the backend or API
             const token = localStorage.getItem("token")
-            const response = await fetch(`${API_URL}/api/v1/departments`, {
+            const response = await fetch(`${API_URL}/api/v1/department`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -271,12 +242,11 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel }) => {
                 body: JSON.stringify(values),
             });
 
-            const data = await response.json();
+            const data = await response.text();
             if (response.ok) {
-                // Successfully saved the department
                 console.log("Department created successfully", data);
-                handleOk(data);  // Pass the saved department data to parent
-                form.resetFields();  // Reset the form fields
+                handleOk(data);
+                form.resetFields();
                 toast.success("Department Created Successfully");
             } else {
                 // Handle any errors from the server
@@ -308,7 +278,11 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel }) => {
                 form
                     .validateFields()
                     .then((values) => {
-                        saveDepartment(values);  // Call saveDepartment instead of handleOk
+                        saveDepartment({
+                          id: values.departmentId,
+                          department_name: values.departmentName,
+                          head_department: values.headDepartment,
+                        });
                     })
                     .then(() => handleCancel())
                     .catch((info) => {
@@ -331,15 +305,11 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel }) => {
             width={850}
         >
             <Form form={form} layout="vertical">
-                {/* Department ID Field */}
                 <Form.Item
                     name="departmentId"
-                    label="Department ID"
-                    rules={[
-                        { required: true, message: "Please input the department ID!" },
-                    ]}
+                    label="Department ID (optional)"
                 >
-                    <Input size="large" />
+                    <Input size="large" placeholder="Leave blank to auto-generate" />
                 </Form.Item>
 
                 {/* Department Name Field */}
@@ -352,82 +322,24 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel }) => {
                 >
                     <Input size="large" />
                 </Form.Item>
+
+                {/* Head Department Field */}
+                <Form.Item
+                    name="headDepartment"
+                    label="Department Head (Manager)"
+                    rules={[
+                        { required: true, message: "Please select the department head!" },
+                    ]}
+                >
+                    <Select size="large" placeholder="Select a manager">
+                        {managers?.filter((manager) => manager.role === "MANAGER").map((manager) => (
+                            <Select.Option key={manager.id} value={manager.id}>
+                                {manager.full_name || manager.fullname} ({manager.id})
+                            </Select.Option>
+                        ))}
+                    </Select>
+                </Form.Item>
             </Form>
         </Modal>
-    );
-};
-
-
-const DepartmentForm = ({ departmentData, onSave, depManagers, deleteDepartment }) => {
-    const [edit, setEdit] = useState(false);
-    const [editDepartment, setEditDepartment] = useState(departmentData);
-
-    const handleInputChange = (field, value) => {
-        setEditDepartment((prev) => ({ ...prev, [field]: value }));
-    };
-
-    const saveDepartment = async () => {
-        try {
-            await onSave(editDepartment); // Call the save handler passed via props
-            setEdit(false); // Exit edit mode after saving
-        } catch (error) {
-            console.error("Failed to save department:", error);
-        }
-    };
-
-
-    return (
-        <tr className="hover:bg-gray-100">
-            {/* ID Field */}
-            <td className="border px-4 py-2">
-                {edit ? (
-                    <Input
-                        value={editDepartment.departmentId}
-                        onChange={(e) => handleInputChange("departmentId", e.target.value)}
-                        disabled // Disable ID editing if it's not allowed
-                    />
-                ) : (
-                    departmentData.departmentId
-                )}
-            </td>
-
-            {/* Full Name Field */}
-            <td className="border px-4 py-2">
-                {edit ? (
-                    <Input
-                        value={editDepartment.departmentName}
-                        onChange={(e) => handleInputChange("departmentName", e.target.value)}
-                    />
-                ) : (
-                    departmentData.departmentName
-                )}
-            </td>
-            <td className="border px-4 py-2">{depManagers?.join(", ")}</td>
-
-            {/* Action Buttons */}
-            <td className="border px-4 py-2">
-                {edit ? (
-                    <div className="flex gap-2">
-                        {/* Save Button */}
-                        <Button size="small" className="mb-2" onClick={saveDepartment}>
-                            Save
-                        </Button>
-                        {/* Cancel Button */}
-                        <Button size="small" className="mb-2" onClick={() => setEdit(false)}>
-                            Cancel
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="flex gap-2">
-                        <Button size="small" className="mb-2" onClick={() => setEdit(true)}>
-                            Edit
-                        </Button>
-                        <div className=" flex rounded-full">
-                            <button><CircleX className="text-[#de0d0d] w-8 h-8" onClick={() => deleteDepartment(departmentData.departmentId)} /></button>
-                        </div>
-                    </div>
-                )}
-            </td>
-        </tr>
     );
 };

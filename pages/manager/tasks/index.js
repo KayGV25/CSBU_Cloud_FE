@@ -27,11 +27,9 @@ export default function EmployeeTasksManagement() {
       const dataToPass = {
         id: values.id,
         taskName: values.taskName,
-        departmentId: user?.department,
+        managerId: user?.id,
         employeeId: values.employeeId,
-        description: values.description,
-        deadline: dayjs(values.deadline).format("YYYY-MM-DD"),
-        status: false
+        deadline: dayjs(values.deadline).format("YYYY-MM-DDTHH:mm:ss.000") + "+00:00",
       }
 
       const response = await fetch(`${TASK_API_URL}`, {
@@ -96,18 +94,39 @@ export default function EmployeeTasksManagement() {
 
   const fetchTasksByDepartment = async () => {
     const token = localStorage.getItem("token");
-    // const dataToPass = { departmentId: user?.department }
     try {
-      const response = await fetch(`${TASK_API_URL}/department/${user?.department}`, {
+      const usersResponse = await fetch(`${API_URL}/api/v1/users`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      if (!usersResponse.ok) throw new Error("Failed to fetch users");
+      const allUsers = await usersResponse.json();
+      const departmentEmployees = allUsers.filter(
+        (employee) =>
+          (employee.department_id || employee.department) === user?.department &&
+          employee.role === "EMPLOYEE"
+      );
 
-      if (!response.ok) throw new Error("Failed to fetch tasks");
-      const data = await response.json();
-      setTasks(data);
+      const taskResponses = await Promise.all(
+        departmentEmployees.map((employee) =>
+          fetch(`${TASK_API_URL}/${employee.id}?page=1&size=100`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+        )
+      );
+      const responsePayloads = await Promise.all(
+        taskResponses.map(async (response) => {
+          if (!response.ok) return { data: [] };
+          return response.json();
+        })
+      );
+      const mergedTasks = responsePayloads.flatMap((payload) => payload.data || []);
+      setTasks(mergedTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
       toast.error("Failed to fetch tasks!");
@@ -179,15 +198,12 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel }) => {
 
   const fetchEmployees = async () => {
     const token = localStorage.getItem("token");
-    const dataToPass = { department: user?.department }
     try {
-      const response = await fetch(`${API_URL}/api/v1/users/department`, {
-        method: "POST",
+      const response = await fetch(`${API_URL}/api/v1/users`, {
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(dataToPass)
       });
 
       if (!response.ok) throw new Error("Failed to fetch employees");
@@ -255,16 +271,14 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel }) => {
           rules={[{ required: true, message: 'Please select the assignee!' }]}
         >
           <Select placeholder="Select an employee" size="large">
-            {employees?.map((employee) => (
+            {employees?.filter((employee) => employee.role === "EMPLOYEE").map((employee) => (
               <Select.Option key={employee.id} value={employee.id}>
-                {employee.fullname}
+                {employee.full_name || employee.fullname}
               </Select.Option>
             ))}
           </Select>
         </Form.Item>
-        <Form.Item name="description" label="Task Description" rules={[{ required: true, message: 'Task Description' }]}>
-          <Input size="large" />
-        </Form.Item>
+
         <Form.Item name="deadline" label="Deadline" rules={[{ required: true, message: 'Please select the deadline!' }]}>
           <DatePicker style={{ width: '100%' }} size="large"></DatePicker>
         </Form.Item>

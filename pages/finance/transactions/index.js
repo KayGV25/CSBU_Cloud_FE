@@ -2,12 +2,11 @@ import { House , Search, X , Eye, CircleCheck, CircleX } from "lucide-react";
 import Layout from "../../../components/Layout"
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { postFetcher,getFetcher , deleteFetcher, updateFetcher} from "../../../fetcher";
+import { postFetcher,getFetcher , deleteFetcher } from "../../../fetcher";
 import useSWR, { mutate } from 'swr';
 import {Button, Modal, Form, Input, Upload, Select, Pagination, InputNumber, message} from 'antd'
 import { UploadOutlined } from '@ant-design/icons';
 import { FINANCE_API_URL } from "../../../env";
-import { API_URL } from "../../../env";
 
 
 export default function Transaction() {
@@ -146,8 +145,11 @@ const CreateModal = ({ isCreateModalOpen, handleOk, handleCancel, currentPage, s
         <Form.Item name="transactionId" label="Transaction Id" rules={[{ required: true, message: 'Please input the transaction type!' }]}>
           <Input size="large"/>
         </Form.Item>
-        <Form.Item name="transactionType" label="Transaction Type" rules={[{ required: true, message: 'Please input the transaction type!' }]}>
-          <Input size="large"/>
+        <Form.Item name="transactionType" label="Transaction Type" rules={[{ required: true, message: 'Please select the transaction type!' }]}>
+          <Select size="large" placeholder="Select type">
+            <Select.Option value="EXPENSE">EXPENSE</Select.Option>
+            <Select.Option value="INCOME">INCOME</Select.Option>
+          </Select>
         </Form.Item>
         <Form.Item
           name="Budget"
@@ -266,7 +268,7 @@ const SearchBar = ({showModal, onSearch, setSearchParams, setCurrentPage}) => {
             onChange={(e) => setSelectedBudget(e.target.value)}
             className="border rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-green-500 w-full"
           >
-            <option>Choose</option>
+            <option value="">Choose</option>
             {uniqueCurrency && uniqueCurrency.length > 0 ? (
               uniqueCurrency.map((currency, index) => (
                 <option key={index} value={currency}>
@@ -287,9 +289,9 @@ const SearchBar = ({showModal, onSearch, setSearchParams, setCurrentPage}) => {
             onChange={(e) => setSelectedStatus(e.target.value)}
             className="border rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-green-500 w-full"
           >
-            <option>Choose</option>
-            <option>Pending</option>
-            <option>Paid</option>
+            <option value="">Choose</option>
+            <option value="false">Pending</option>
+            <option value="true">Paid</option>
           </select>
         </div>
       </div>
@@ -317,7 +319,7 @@ const Table = ( {currentPage, totalPages, data, handlePageChange, searchParams})
   const [selectedId, setSelectedId] = useState(null); 
   const handleDelete = async (id) => {
     try {
-      const url = `/api/transaction/${id}`; 
+      const url = `${FINANCE_API_URL}/transactions/${id}`; 
       
       await deleteFetcher(url);
       window.location.reload();
@@ -495,7 +497,7 @@ const FileModal = ({ isFileModalOpen, handleOk, handleCancel , id, currentPage,s
         >
           <Upload
             beforeUpload={() => false} 
-            accept=".csv,.pdf,.docx,.jpg,.jpeg,.png,.gif"
+            accept=".jpg,.jpeg,.png"
             maxCount={1}
           >
 

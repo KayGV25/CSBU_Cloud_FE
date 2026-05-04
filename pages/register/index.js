@@ -1,8 +1,6 @@
-import axios from "axios";
 import { useRouter } from "next/router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useUserContext } from "../../context/UserContext";
 import Link from "next/link";
 import { API_URL } from "../../env";
 
@@ -10,16 +8,29 @@ import { API_URL } from "../../env";
 const Register = () => {
   const [formData, setFormData] = useState({
     id: "",
-    fullname: "",
-    department: "unknown",
-    password: "",
-    role: "user"
+    full_name: "",
+    dob: "",
+    department_id: "",
+    yoe: 0,
+    role: "EMPLOYEE",
   });
+  const [departments, setDepartments] = useState([]);
   const [isSigningUp, setIsSigningUp] = useState(false);
-  const router = useRouter()
-  const {user} = useUserContext();
+  const router = useRouter();
 
-  console.log(user);
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/v1/department`);
+        if (!response.ok) throw new Error("Failed to fetch departments");
+        const data = await response.json();
+        setDepartments(data);
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,23 +39,27 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission logic here
     try {
       setIsSigningUp(true);
-      const data = await axios.post(`${API_URL}/api/v1/users`, formData)
-      toast.success("Create Account Successfully!!!");
-      // console.log(data);
-      router.push("/login");
-    } catch (error){
-      toast.error(`Error occured: ${error}`);
-    } finally {
-      setFormData({
-        id: "",
-        fullname: "",
-        department: "unknown",
-        password: "",
-        role: "user"
+      const response = await fetch(`${API_URL}/api/v1/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: formData.id || undefined,
+          full_name: formData.full_name,
+          dob: formData.dob,
+          department_id: formData.department_id,
+          yoe: Number(formData.yoe),
+          approved: false,
+          role: formData.role,
+        }),
       });
+      if (!response.ok) throw new Error("Registration failed");
+      toast.success("Account created successfully!");
+      router.push("/login");
+    } catch (error) {
+      toast.error(`Error: ${error.message}`);
+    } finally {
       setIsSigningUp(false);
     }
   };
@@ -56,13 +71,11 @@ const Register = () => {
           Register
         </h2>
         <form onSubmit={handleSubmit}>
-          {/* Email Field */}
+
+          {/* Employee ID (optional) */}
           <div className="mb-4">
-            <label
-              htmlFor="id"
-              className="block mb-2 text-sm font-medium text-gray-600"
-            >
-              Employee ID
+            <label htmlFor="id" className="block mb-2 text-sm font-medium text-gray-600">
+              Employee ID <span className="text-gray-400">(optional)</span>
             </label>
             <input
               type="text"
@@ -70,25 +83,21 @@ const Register = () => {
               name="id"
               value={formData.id}
               onChange={handleChange}
-              placeholder="Enter your employee ID"
+              placeholder="Leave blank to auto-generate"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring focus:ring-indigo-100 focus:border-indigo-300"
-              required
             />
           </div>
 
-          {/* ID Field */}
+          {/* Full Name */}
           <div className="mb-4">
-            <label
-              htmlFor="fullname"
-              className="block mb-2 text-sm font-medium text-gray-600"
-            >
+            <label htmlFor="full_name" className="block mb-2 text-sm font-medium text-gray-600">
               Full Name
             </label>
             <input
               type="text"
-              id="fullname"
-              name="fullname"
-              value={formData.fullname}
+              id="full_name"
+              name="full_name"
+              value={formData.full_name}
               onChange={handleChange}
               placeholder="Enter your full name"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring focus:ring-indigo-100 focus:border-indigo-300"
@@ -96,32 +105,87 @@ const Register = () => {
             />
           </div>
 
-          {/* Password Field */}
+          {/* Date of Birth */}
           <div className="mb-4">
-            <label
-              htmlFor="password"
-              className="block mb-2 text-sm font-medium text-gray-600"
-            >
-              Password
+            <label htmlFor="dob" className="block mb-2 text-sm font-medium text-gray-600">
+              Date of Birth
             </label>
             <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
+              type="date"
+              id="dob"
+              name="dob"
+              value={formData.dob}
               onChange={handleChange}
-              placeholder="Enter your password"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring focus:ring-indigo-100 focus:border-indigo-300"
               required
             />
           </div>
 
-          {/* Submit Button */}
+          {/* Department */}
+          <div className="mb-4">
+            <label htmlFor="department_id" className="block mb-2 text-sm font-medium text-gray-600">
+              Department
+            </label>
+            <select
+              id="department_id"
+              name="department_id"
+              value={formData.department_id}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring focus:ring-indigo-100 focus:border-indigo-300"
+              required
+            >
+              <option value="">Select a department</option>
+              {departments.map((dept) => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.department_name} ({dept.id})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Years of Experience */}
+          <div className="mb-4">
+            <label htmlFor="yoe" className="block mb-2 text-sm font-medium text-gray-600">
+              Years of Experience
+            </label>
+            <input
+              type="number"
+              id="yoe"
+              name="yoe"
+              value={formData.yoe}
+              onChange={handleChange}
+              min={0}
+              placeholder="Enter years of experience"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring focus:ring-indigo-100 focus:border-indigo-300"
+              required
+            />
+          </div>
+
+          {/* Role */}
+          <div className="mb-6">
+            <label htmlFor="role" className="block mb-2 text-sm font-medium text-gray-600">
+              Role
+            </label>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring focus:ring-indigo-100 focus:border-indigo-300"
+            >
+              <option value="EMPLOYEE">Employee</option>
+              <option value="MANAGER">Manager</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
+
+          {/* Submit */}
           <button
             type="submit"
-            className="w-full px-4 py-2 font-bold text-white bg-indigo-500 rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            disabled={isSigningUp}
+            className="w-full px-4 py-2 font-bold text-white bg-indigo-500 rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50"
           >
-            Register
+            {isSigningUp ? "Registering..." : "Register"}
           </button>
         </form>
 

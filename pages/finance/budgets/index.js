@@ -2,7 +2,7 @@ import Layout from "../../../components/Layout"
 import Head from "next/head";
 import { useRouter } from 'next/router';
 import { House , Search, X} from 'lucide-react';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUserContext } from "../../../context/UserContext";
 import {Button, Modal, Form, Input, DatePicker, Select, InputNumber, Pagination} from 'antd'
 import { getFetcher ,postFetcher} from "../../../fetcher";
@@ -86,6 +86,7 @@ export default function Budget() {
 
 const CreateModal = ({ isModalOpen, handleOk, handleCancel, searchParams, currentPage }) => {
   const [form] = Form.useForm();
+  const [currencyOptions, setCurrencyOptions] = useState([]);
   const modal_footer=[
     <Button size="large" key="cancel" onClick={handleCancel}
       className="bg-[rgb(239,105,105)] text-white no-transition">
@@ -100,6 +101,12 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel, searchParams, curren
     </Button>,
   ]
   const [err, setErr] = useState('')
+  const { data: budgetIdCurrencies } = useSWR(`${FINANCE_API_URL}/budgets/id-currency`, getFetcher);
+  useEffect(() => {
+    if (!budgetIdCurrencies) return;
+    const currencies = [...new Set(budgetIdCurrencies.map((item) => item.currency).filter(Boolean))];
+    setCurrencyOptions(currencies);
+  }, [budgetIdCurrencies]);
   const handleCreate = async () => {
     try {
       const values = await form.validateFields();
@@ -107,8 +114,8 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel, searchParams, curren
         id: values.budgetId,
         budgetAmount: values.initialBudget,
         currency: values.Currency,
-        periodStart: values.StartDate,
-        periodEnd: values.EndDate,
+        periodStart: values.StartDate?.format('YYYY-MM-DD'),
+        periodEnd: values.EndDate?.format('YYYY-MM-DD'),
         description: values.Description,
       });
 
@@ -129,7 +136,7 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel, searchParams, curren
 
   return (
     <Modal
-      title="Create New Task"
+      title="Create New Budget"
       open={isModalOpen}
       onOk={handleOk}
       onCancel={handleCancel}
@@ -154,8 +161,12 @@ const CreateModal = ({ isModalOpen, handleOk, handleCancel, searchParams, curren
 
         />
         </Form.Item>
-        <Form.Item name="Currency" label="Currency" rules={[{ required: true, message: 'Please input the Currency!' }]}>
-          <Input size="large"/>
+        <Form.Item name="Currency" label="Currency" rules={[{ required: true, message: 'Please select the Currency!' }]}>
+          <Select
+            size="large"
+            placeholder="Select currency"
+            options={currencyOptions.map((currency) => ({ label: currency, value: currency }))}
+          />
         </Form.Item>
         
         <Form.Item name="StartDate" label="Start Date" rules={[{ required: true, message: 'Please select the Start Date!' }]}>

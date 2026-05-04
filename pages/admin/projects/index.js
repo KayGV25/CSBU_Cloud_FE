@@ -250,7 +250,7 @@ const CreateEditProjectModal = ({ isModalOpen, isEditMode, project, handleCancel
   const fetchDepartments = async () => {
     const token = localStorage.getItem("token");
     try {
-      const response = await fetch(`${API_URL}/api/v1/departments`, {
+      const response = await fetch(`${API_URL}/api/v1/department`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
