@@ -21,7 +21,7 @@ export default function UserContextProvider({ children }) {
 
         try {
             if (!storedToken && !["/login", "/register"].includes(router.pathname)) {
-                router.push("/login");
+                // router.push("/login");
                 return;
             }
 
@@ -51,7 +51,7 @@ export default function UserContextProvider({ children }) {
         } catch (error) {
             console.error("Error fetching user:", error);
             if (!["/login", "/register"].includes(router.pathname)) {
-                router.push("/login");
+                // router.push("/login");
             }
         }
     };
