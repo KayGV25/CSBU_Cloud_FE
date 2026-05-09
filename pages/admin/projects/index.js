@@ -131,7 +131,7 @@ export default function ProjectsPage() {
       <Head>
         <title>CSBU Management - Projects</title>
         <meta name="description" content="Manage your projects with ease." />
-        <link rel="icon" href="/pro.ico" />
+        <link rel="icon" href="https://group-3-buckett.s3.us-east-1.amazonaws.com/storage/public/pro.ico" />
       </Head>
       <Layout>
         <div className="p-6 w-full bg-white shadow-md rounded-md h-full">
